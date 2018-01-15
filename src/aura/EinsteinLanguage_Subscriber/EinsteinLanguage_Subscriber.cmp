@@ -1,0 +1,166 @@
+<aura:component controller="EinsteinLanguage_Admin" implements="force:appHostable,flexipage:availableForAllPageTypes,force:hasRecordId" access="global">
+
+  <ltng:require scripts="{!$Resource.cometd}" afterScriptsLoaded="{!c.onCometdLoaded}"/>
+  <aura:attribute name="cometdSubscriptions" type="Object[]"/>
+  <aura:attribute name="cometd" type="Object"/>
+  <aura:attribute name="sessionId" type="String"/>
+  <aura:attribute name="message"        type="String"/>
+  <aura:attribute name="time"        type="String"/>
+  <aura:attribute name="notifier"        type="String"/>
+  <aura:attribute name="email"        type="String"/>
+
+  <aura:attribute name="spinnerWaiting" type="Boolean" default="false"/>
+  <aura:attribute name="intents"        type="List" />
+  <aura:attribute name="sentiments"     type="List" />
+  <aura:attribute name="selectedTabId"  type="String" default="intentTab" />
+    <!-- <aura:attribute name="recordId"       type="Id" /> -->
+
+  <aura:handler name="init" value="{!this}" action="{!c.onInit}"/>
+  <!-- <aura:handler event="c:NotificationRecieved" action="{!c.onNotificationRecieved}" /> -->
+
+  <lightning:tabset aura:id="tabset">
+    <lightning:tab label="Intent" id="intentTab">
+      <article class="slds-card">
+        <div class="slds-grid slds-einstein-header slds-card__header">
+          <header class="slds-media slds-media_center slds-has-flexi-truncate">
+            <div class="slds-grid slds-grid_vertical-align-center slds-size_3-of-4 slds-medium-size_2-of-3">
+              <div class="slds-media__body">
+                <h2 class="slds-truncate" title="Intents">
+                  <a href="javascript:void(0);" class="slds-card__header-link" title="Intents">
+                    <span class="slds-text-heading_small">Intents</span>
+                  </a>
+                </h2>
+              </div>
+            </div>
+            <div class="slds-einstein-header__figure slds-size_1-of-4 slds-medium-size_1-of-3"></div>
+          </header>
+        </div>
+        <div class="slds-card__body slds-card__body_inner">
+          <div class="slds-form slds-form_compound">
+            <fieldset class="slds-form-element">
+              <div class="slds-form-element__row">
+                <div class="slds-form-element slds-size_1-of-2">
+                  <label class="slds-form-element__label" for="notifier">Notifier</label>
+                  <ui:outputText value="{!v.notifier}" />
+                </div>
+                <div class="slds-form-element slds-size_1-of-2">
+                  <label class="slds-form-element__label" for="time">Time</label>
+                  <ui:outputText value="{!v.time}" />
+                </div>
+              </div>
+            </fieldset>
+            <fieldset class="slds-form-element">
+              <div class="slds-form-element__row">
+                <div class="slds-form-element slds-size_1-of-1">
+                  <label class="slds-form-element__label" for="email">Email</label>
+                  <ui:outputText value="{!v.email}" />
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <lightning:textarea aura:id="message" name="message" label="What are you thinking about?" value="{!v.message}" onblur="{!c.onReadIntentMessage}" />
+          <aura:if isTrue="{!v.spinnerWaiting}">
+            <lightning:spinner size="medium" />
+          </aura:if>
+          <fieldset class="slds-box slds-theme_default slds-container_medium">
+            <legend class="slds-text-heading_x-small slds-p-vertical_small">&nbsp; Einstein suggests: &nbsp;</legend>
+            <lightning:layout multipleRows="true" horizontalAlign="left">
+              <aura:iteration items="{!v.intents}" var="intent">
+                <div class="slds-size_1-of-3">
+                  <lightning:layoutItem size="" flexibility="grow" class="slds-m-right_small slds-grid slds-wrap">
+                    <article class="slds-tile slds-tile_board">
+                      <h3 class="slds-truncate" title="label">{!intent.label}</h3>
+                      <div class="slds-tile__detail">
+                        <p class="slds-text-heading_medium">{!intent.probability} ％</p>
+                      </div>
+                    </article>
+                  </lightning:layoutItem>
+                </div>
+              </aura:iteration>
+              <aura:if isTrue="{!empty(v.intents)}">
+                <lightning:layoutItem class="slds-align_absolute-center">
+                  <ui:outputText value="There is no suggestion..." />
+                </lightning:layoutItem>
+              </aura:if>
+            </lightning:layout>
+          </fieldset>
+        </div>
+        <footer class="slds-card__footer slds-clearfix">
+          <span class="slds-float_right">powered by Einstein Intent</span>
+        </footer>
+      </article>
+    </lightning:tab>
+    <lightning:tab label="Sentiment" id="sentimentTab">
+      <article class="slds-card">
+        <div class="slds-grid slds-einstein-header slds-card__header">
+          <header class="slds-media slds-media_center slds-has-flexi-truncate">
+            <div class="slds-grid slds-grid_vertical-align-center slds-size_3-of-4 slds-medium-size_2-of-3">
+              <div class="slds-media__body">
+                <h2 class="slds-truncate" title="Sentiment">
+                  <a href="javascript:void(0);" class="slds-card__header-link" title="Sentiment">
+                    <span class="slds-text-heading_small">Sentiments</span>
+                  </a>
+                </h2>
+              </div>
+            </div>
+            <div class="slds-einstein-header__figure slds-size_1-of-4 slds-medium-size_1-of-3"></div>
+          </header>
+        </div>
+        <div class="slds-card__body slds-card__body_inner">
+          <div class="slds-form slds-form_compound">
+            <fieldset class="slds-form-element">
+              <div class="slds-form-element__row">
+                <div class="slds-form-element slds-size_1-of-2">
+                  <label class="slds-form-element__label" for="notifier">Notifier</label>
+                  <ui:outputText value="{!v.notifier}" />
+                </div>
+                <div class="slds-form-element slds-size_1-of-2">
+                  <label class="slds-form-element__label" for="time">Time</label>
+                  <ui:outputText value="{!v.time}" />
+                </div>
+              </div>
+            </fieldset>
+            <fieldset class="slds-form-element">
+              <div class="slds-form-element__row">
+                <div class="slds-form-element slds-size_1-of-1">
+                  <label class="slds-form-element__label" for="email">Email</label>
+                  <ui:outputText value="{!v.email}" />
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <lightning:textarea aura:id="message" name="message" label="What are you thinking about?" value="{!v.message}" onblur="{!c.onReadSentimentMessage}" />
+          <aura:if isTrue="{!v.spinnerWaiting}">
+            <lightning:spinner size="medium" />
+          </aura:if>
+          <fieldset class="slds-box slds-theme_default slds-container_medium">
+            <legend class="slds-text-heading_x-small slds-p-vertical_small">&nbsp; Einstein suggests: &nbsp;</legend>
+            <lightning:layout multipleRows="true" horizontalAlign="left">
+              <aura:iteration items="{!v.sentiments}" var="sentiment">
+                <div class="slds-size_1-of-3">
+                  <lightning:layoutItem size="" flexibility="grow" class="slds-m-right_small slds-grid slds-wrap">
+                    <article class="slds-tile slds-tile_board">
+                      <h3 class="slds-truncate" title="label">{!sentiment.label}</h3>
+                      <div class="slds-tile__detail">
+                        <p class="slds-text-heading_medium">{!sentiment.probability} ％</p>
+                      </div>
+                    </article>
+                  </lightning:layoutItem>
+                </div>
+              </aura:iteration>
+              <aura:if isTrue="{!empty(v.sentiments)}">
+                <lightning:layoutItem class="slds-align_absolute-center">
+                  <ui:outputText value="There is no suggestion..." />
+                </lightning:layoutItem>
+              </aura:if>
+            </lightning:layout>
+          </fieldset>
+        </div>
+        <footer class="slds-card__footer slds-clearfix">
+          <span class="slds-float_right">powered by Einstein Sentiment</span>
+        </footer>
+      </article>
+    </lightning:tab>
+  </lightning:tabset>
+
+</aura:component>
